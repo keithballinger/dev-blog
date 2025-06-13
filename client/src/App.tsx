@@ -4,13 +4,15 @@ import { trpc } from '@/utils/trpc';
 import { BlogHeader } from '@/components/BlogHeader';
 import { PostList } from '@/components/PostList';
 import { PostDetail } from '@/components/PostDetail';
+import { AdminDashboard } from '@/components/AdminDashboard';
 import type { Post, PostWithSnippets } from '../../server/src/schema';
 
 function App() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedPost, setSelectedPost] = useState<PostWithSnippets | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
+  const [currentView, setCurrentView] = useState<'list' | 'detail' | 'admin'>('list');
+  const [isAdminMode, setIsAdminMode] = useState(false);
 
   const loadPosts = useCallback(async () => {
     try {
@@ -48,12 +50,33 @@ function App() {
     setSelectedPost(null);
   };
 
+  const handleAdminToggle = (enabled: boolean) => {
+    setIsAdminMode(enabled);
+    if (enabled) {
+      setCurrentView('admin');
+    } else {
+      setCurrentView('list');
+      setSelectedPost(null);
+    }
+  };
+
+  const handleBackFromAdmin = () => {
+    setIsAdminMode(false);
+    setCurrentView('list');
+    loadPosts(); // Refresh posts when leaving admin mode
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <div className="max-w-4xl mx-auto">
-        <BlogHeader />
+        <BlogHeader 
+          isAdminMode={isAdminMode}
+          onAdminToggle={handleAdminToggle}
+        />
         
-        {currentView === 'list' ? (
+        {currentView === 'admin' ? (
+          <AdminDashboard onBack={handleBackFromAdmin} />
+        ) : currentView === 'list' ? (
           <PostList 
             posts={posts} 
             isLoading={isLoading}
